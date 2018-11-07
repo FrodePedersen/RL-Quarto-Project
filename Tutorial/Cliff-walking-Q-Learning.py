@@ -104,7 +104,7 @@ def choose_action(state, q_table, epsilon):
 
 
 #NEEDS FIXING FOR THE NEXT_STATE PERHAPS? ALSO the GLOBAL VAR NAMES ETC
-def training(start_state, environment, q_table, N_EPISODES=20, MAX_EPISODE_STEPS=200, alpha=0.9, gamma=1.0, epsilon=0.1):
+def Q_training(start_state, environment, q_table, N_EPISODES=20, MAX_EPISODE_STEPS=200, alpha=0.9, gamma=1.0, epsilon=0.1):
 
 	for e in range(N_EPISODES):
 
@@ -127,14 +127,44 @@ def training(start_state, environment, q_table, N_EPISODES=20, MAX_EPISODE_STEPS
 		print(f"Episode {e + 1}: total reward -> {total_reward}")
 		#print(f"steps: {steps}")
 
+def Sarsa_training(start_state, environment, q_table, N_EPISODES=20, MAX_EPISODE_STEPS=200, alpha=0.9, gamma=1.0, epsilon=0.1):
+
+	for e in range(N_EPISODES):
+
+		state = start_state
+		total_reward = 0
+		alpha = alpha
+		steps = []
+		action = choose_action(state, q_table, epsilon)
+		action_prime = -1
+
+		for _ in range(MAX_EPISODE_STEPS):
+			
+			#steps.append(translateActionNumbers(action))
+			next_state, reward, is_done = perform_action(state, environment, action)
+			action_prime = choose_action(next_state, q_table, epsilon)
+
+
+			total_reward += reward
+
+			q_table[state[0],state[1], action] = q_table[state[0], state[1], action] + alpha * (reward + gamma*q_table[next_state[0], next_state[1], action_prime] - q_table[state[0], state[1], action])
+			state = next_state
+			action = action_prime
+
+			if is_done:
+				break
+
+		print(f"Episode {e + 1}: total reward -> {total_reward}")
+
+
 def main():
 	random.seed(42)
 	worldSize = (4,12)
 	N_STATES = worldSize[0] * worldSize[1]
 	N_EPISODES = 500
-	MAX_EPISODE_STEPS = 50000
-	alpha = 0.5
-	gamma = 0.7
+	MAX_EPISODE_STEPS = 100000
+	alpha = 0.1
+	gamma = 0.7	
 	epsilon = 0.1
 	grid = createWorld(worldSize)
 	#print(grid)
@@ -144,8 +174,8 @@ def main():
 	#1-coord is the rows, 2-coord is the column, 3-coord is the action.
 	q_table = np.zeros((worldSize[0],worldSize[1],4))
 
-	training(start_state, grid, q_table, N_EPISODES, MAX_EPISODE_STEPS, alpha, gamma, epsilon)
-
+	#Q_training(start_state, grid, q_table, N_EPISODES, MAX_EPISODE_STEPS, alpha, gamma, epsilon)
+	Sarsa_training(start_state, grid, q_table, N_EPISODES, MAX_EPISODE_STEPS, alpha, gamma, epsilon)
 	print("done training!")
 	print(q_table)
 	return 0
